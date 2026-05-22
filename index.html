@@ -1,0 +1,1074 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bitsreef — The auto-pilot for the cloud</title>
+<meta name="description" content="Bitsreef is the cloud platform for shipping containerized apps. Push code. Get a URL. Scale to zero or scale to a thousand. Built on Docker, Traefik, Prometheus and Loki." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        colors: {
+          border: 'hsl(var(--border))',
+          input: 'hsl(var(--input))',
+          ring: 'hsl(var(--ring))',
+          background: 'hsl(var(--background))',
+          foreground: 'hsl(var(--foreground))',
+          primary: { DEFAULT: 'hsl(var(--primary))', foreground: 'hsl(var(--primary-foreground))' },
+          secondary: { DEFAULT: 'hsl(var(--secondary))', foreground: 'hsl(var(--secondary-foreground))' },
+          destructive: { DEFAULT: 'hsl(var(--destructive))', foreground: 'hsl(var(--destructive-foreground))' },
+          muted: { DEFAULT: 'hsl(var(--muted))', foreground: 'hsl(var(--muted-foreground))' },
+          accent: { DEFAULT: 'hsl(var(--accent))', foreground: 'hsl(var(--accent-foreground))' },
+          card: { DEFAULT: 'hsl(var(--card))', foreground: 'hsl(var(--card-foreground))' },
+          success: { DEFAULT: 'hsl(var(--success))', foreground: 'hsl(var(--success-foreground))' },
+          warning: { DEFAULT: 'hsl(var(--warning))', foreground: 'hsl(var(--warning-foreground))' },
+          info: { DEFAULT: 'hsl(var(--info))', foreground: 'hsl(var(--info-foreground))' },
+          panel: { DEFAULT: 'hsl(var(--panel))' },
+          action: { DEFAULT: 'hsl(var(--action))', foreground: '#002B1F' },
+          pink: 'hsl(var(--pink))',
+          cyan: 'hsl(var(--cyan))',
+          amber: 'hsl(var(--amber))',
+        },
+        borderRadius: { lg: 'var(--radius)', md: 'calc(var(--radius) - 2px)', sm: 'calc(var(--radius) - 4px)' },
+        fontFamily: {
+          sans: ['Space Grotesk', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+          mono: ['Space Mono', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+        },
+      },
+    },
+  }
+</script>
+<style>
+  :root {
+    --background: 240 25% 8%;
+    --foreground: 240 100% 97%;
+    --card: 240 25% 14%;
+    --card-foreground: 240 100% 97%;
+    --primary: 252 100% 64%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 23% 21%;
+    --secondary-foreground: 240 100% 97%;
+    --muted: 240 23% 21%;
+    --muted-foreground: 240 21% 57%;
+    --accent: 240 23% 21%;
+    --accent-foreground: 240 100% 97%;
+    --destructive: 326 100% 62%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 158 100% 50%;
+    --success-foreground: 156 100% 8%;
+    --warning: 43 100% 50%;
+    --warning-foreground: 36 100% 8%;
+    --info: 190 100% 50%;
+    --info-foreground: 200 100% 11%;
+    --border: 240 23% 21%;
+    --input: 240 23% 21%;
+    --ring: 252 100% 64%;
+    --radius: 0.875rem;
+    --panel: 240 25% 11%;
+    --action: 158 100% 50%;
+    --pink: 326 100% 62%;
+    --cyan: 190 100% 50%;
+    --amber: 43 100% 50%;
+  }
+  html, body { background: hsl(var(--background)); color: hsl(var(--foreground)); font-family: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  .mono { font-family: 'Space Mono', ui-monospace, monospace; }
+  .hairline { border-color: hsl(var(--border)); }
+  .hero-grad {
+    background:
+      radial-gradient(ellipse 60% 50% at 50% 0%, hsla(252, 100%, 64%, 0.22), transparent 60%),
+      radial-gradient(ellipse 70% 60% at 90% 30%, hsla(326, 100%, 62%, 0.10), transparent 70%),
+      radial-gradient(ellipse 50% 60% at 10% 90%, hsla(158, 100%, 50%, 0.06), transparent 70%);
+  }
+  .grid-overlay {
+    background-image:
+      linear-gradient(hsla(240, 10%, 93%, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, hsla(240, 10%, 93%, 0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  .dotgrid {
+    background-image: radial-gradient(hsla(240, 30%, 80%, 0.10) 1px, transparent 1px);
+    background-size: 18px 18px;
+  }
+  .placeholder-stripes {
+    background-image: repeating-linear-gradient(135deg, hsla(240,10%,93%,0.05) 0 8px, transparent 8px 16px);
+  }
+  /* Reef wave divider */
+  .reef-line { height: 1px; background: linear-gradient(90deg, transparent, hsla(252, 100%, 64%, 0.5), hsla(326, 100%, 62%, 0.5), hsla(190, 100%, 50%, 0.5), transparent); }
+  /* Marquee */
+  @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  .marquee-track { display: flex; width: max-content; animation: marquee 40s linear infinite; }
+  /* Pulse for live tags */
+  @keyframes glowpulse { 0%,100% { box-shadow: 0 0 0 0 hsla(158, 100%, 50%, 0.55); } 50% { box-shadow: 0 0 0 6px hsla(158, 100%, 50%, 0); } }
+  .live-dot { animation: glowpulse 1.6s ease-out infinite; }
+  /* Tilted floating card */
+  .float-card { transform: perspective(1400px) rotateX(8deg) rotateY(-4deg); transform-style: preserve-3d; }
+  /* Edge fade for canvas */
+  .edge-fade { mask-image: radial-gradient(ellipse 85% 90% at 50% 50%, black 60%, transparent 100%); -webkit-mask-image: radial-gradient(ellipse 85% 90% at 50% 50%, black 60%, transparent 100%); }
+  /* Edge connector svg lines */
+  .conn { stroke: hsl(var(--primary)); stroke-width: 1.5; fill: none; stroke-dasharray: 4 4; }
+  .conn-glow { stroke: hsl(var(--action)); stroke-width: 1.5; fill: none; }
+  /* Subtle button glow */
+  .btn-glow { box-shadow: 0 0 0 1px hsla(158, 100%, 50%, 0.4), 0 10px 30px -10px hsla(158, 100%, 50%, 0.6); }
+  /* Selection */
+  ::selection { background: hsla(252, 100%, 64%, 0.45); color: white; }
+  /* sticky nav offset */
+  section[id] { scroll-margin-top: 80px; }
+  /* Spin */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spin { animation: spin 4s linear infinite; }
+  /* shimmer */
+  @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+  .shimmer { position: relative; overflow: hidden; }
+  .shimmer::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, hsla(240,100%,97%,0.08), transparent); animation: shimmer 3s ease-in-out infinite; }
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- ===== Top nav ===== -->
+<header class="sticky top-0 z-40 backdrop-blur-xl bg-background/70 border-b hairline">
+  <div class="max-w-[1280px] mx-auto px-6 lg:px-8 h-14 flex items-center justify-between">
+    <a class="flex items-center gap-2.5" href="#">
+      <div class="relative w-7 h-7">
+        <div class="absolute inset-0 rounded-md bg-primary/15 border border-primary/30"></div>
+        <div class="absolute inset-[5px] rounded-[3px] bg-primary"></div>
+        <div class="absolute inset-[10px] rounded-[1px]" style="background:hsl(var(--action))"></div>
+      </div>
+      <div class="leading-none">
+        <div class="text-[14px] font-semibold tracking-tight">bitsreef</div>
+        <div class="text-[9px] mono text-muted-foreground uppercase tracking-[0.18em]">cygnara cloud</div>
+      </div>
+    </a>
+    <nav class="hidden md:flex items-center gap-1 text-[13px] text-muted-foreground">
+      <a class="px-3 py-1.5 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors" href="#product">Product</a>
+      <a class="px-3 py-1.5 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors" href="#features">Features</a>
+      <a class="px-3 py-1.5 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors" href="#how">How it works</a>
+      <a class="px-3 py-1.5 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors" href="#pricing">Pricing</a>
+      <a class="px-3 py-1.5 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors" href="#">Docs</a>
+      <a class="px-3 py-1.5 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors" href="#">Changelog</a>
+    </nav>
+    <div class="flex items-center gap-2">
+      <a class="hidden sm:inline-flex items-center h-8 px-3 rounded-md text-[12px] font-medium text-muted-foreground hover:text-foreground transition-colors" href="#">Sign in</a>
+      <a class="inline-flex items-center gap-2 h-8 px-3 rounded-md text-[12px] font-semibold transition-all btn-glow" style="background:hsl(var(--action));color:#002B1F" href="#">
+        Start deploying
+        <svg viewBox="0 0 24 24" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+    </div>
+  </div>
+</header>
+
+<!-- ===== Hero ===== -->
+<section class="relative hero-grad overflow-hidden">
+  <div class="absolute inset-0 grid-overlay opacity-40 pointer-events-none"></div>
+  <div class="relative max-w-[1280px] mx-auto px-6 lg:px-8 pt-16 lg:pt-24 pb-20">
+    <div class="flex items-center gap-2 mb-7">
+      <span class="inline-flex items-center gap-2 h-7 px-3 rounded-full bg-primary/15 border border-primary/30 text-[11px] mono uppercase tracking-wider text-primary">
+        <span class="w-1.5 h-1.5 rounded-full bg-primary live-dot"></span>
+        v2.4 · multi-region preview now live
+      </span>
+      <span class="hidden md:inline text-[11px] mono text-muted-foreground">→ <a class="hover:text-foreground transition-colors" href="#">read changelog</a></span>
+    </div>
+
+    <h1 class="text-[52px] md:text-[88px] leading-[0.92] tracking-tight font-semibold max-w-5xl">
+      Ship your project<br/>
+      <span style="color:hsl(var(--action))">in minutes,</span><br/>
+      <span class="text-muted-foreground/70">not weekends.</span>
+    </h1>
+
+    <p class="mt-7 max-w-2xl text-lg md:text-xl text-muted-foreground leading-relaxed">
+      Bitsreef is the cloud platform for shipping containerized apps — building from Git, routing with SSL, scaling on metrics, and rolling back on failure. One API. One canvas. Zero DevOps tax.
+    </p>
+
+    <div class="mt-10 flex flex-wrap items-center gap-3">
+      <a class="inline-flex items-center gap-2 h-12 px-5 rounded-lg text-[14px] font-semibold transition-all btn-glow" style="background:hsl(var(--action));color:#002B1F" href="#">
+        Deploy your first service
+        <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+      <a class="inline-flex items-center gap-2 h-12 px-5 rounded-lg text-[14px] font-medium border border-input bg-background/40 hover:bg-accent transition-colors" href="#">
+        <svg viewBox="0 0 24 24" class="w-4 h-4 opacity-70" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Read the docs
+      </a>
+      <span class="hidden lg:inline text-[12px] mono text-muted-foreground ml-2">no credit card · $5 trial credit · live in 4 min</span>
+    </div>
+
+    <!-- code-to-URL strip -->
+    <div class="mt-12 rounded-xl border hairline bg-card/60 backdrop-blur p-1.5 max-w-3xl">
+      <div class="flex items-stretch gap-1.5 mono text-[12px] md:text-[13px]">
+        <div class="flex items-center gap-2 px-3 py-2.5 rounded-md bg-background/60 flex-1 min-w-0">
+          <svg viewBox="0 0 16 16" class="w-3.5 h-3.5 flex-none text-muted-foreground" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 005.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          <span class="truncate"><span class="text-muted-foreground">$</span> git push origin main</span>
+        </div>
+        <div class="hidden sm:flex items-center px-1 text-muted-foreground">→</div>
+        <div class="hidden sm:flex items-center gap-2 px-3 py-2.5 rounded-md bg-background/60 flex-1 min-w-0">
+          <span class="w-2 h-2 rounded-full bg-amber"></span>
+          <span class="truncate"><span class="text-amber">build</span> · kaniko · 1m 47s</span>
+        </div>
+        <div class="hidden md:flex items-center px-1 text-muted-foreground">→</div>
+        <div class="hidden md:flex items-center gap-2 px-3 py-2.5 rounded-md bg-background/60 flex-1 min-w-0">
+          <span class="w-2 h-2 rounded-full live-dot" style="background:hsl(var(--action))"></span>
+          <span class="truncate"><span style="color:hsl(var(--action))">live</span> · acme-api.bitsreef.app</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Trust-strip / metrics -->
+    <div class="mt-14 grid grid-cols-2 md:grid-cols-4 gap-px bg-border/60 rounded-xl overflow-hidden border hairline max-w-4xl">
+      <div class="bg-background/80 p-5">
+        <div class="text-[10px] mono uppercase tracking-[0.18em] text-muted-foreground">code → URL</div>
+        <div class="text-3xl font-semibold mt-1.5">&lt; 4<span class="text-muted-foreground text-xl"> min</span></div>
+      </div>
+      <div class="bg-background/80 p-5">
+        <div class="text-[10px] mono uppercase tracking-[0.18em] text-muted-foreground">price/perf vs hyperscalers</div>
+        <div class="text-3xl font-semibold mt-1.5">17<span class="text-muted-foreground text-xl">×</span></div>
+      </div>
+      <div class="bg-background/80 p-5">
+        <div class="text-[10px] mono uppercase tracking-[0.18em] text-muted-foreground">tests passing</div>
+        <div class="text-3xl font-semibold mt-1.5">1,250<span class="text-muted-foreground text-xl">+</span></div>
+      </div>
+      <div class="bg-background/80 p-5">
+        <div class="text-[10px] mono uppercase tracking-[0.18em] text-muted-foreground">lock-in</div>
+        <div class="text-3xl font-semibold mt-1.5">0<span class="text-muted-foreground text-xl"> · docker-native</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Logos / "Built on" marquee ===== -->
+<section class="border-y hairline bg-panel/30 overflow-hidden">
+  <div class="max-w-[1280px] mx-auto px-6 lg:px-8 py-6 flex items-center gap-8">
+    <div class="hidden md:block flex-none">
+      <div class="text-[10px] mono uppercase tracking-[0.18em] text-muted-foreground">Built on the stack</div>
+      <div class="text-[10px] mono uppercase tracking-[0.18em] text-muted-foreground">you already trust</div>
+    </div>
+    <div class="relative flex-1 overflow-hidden" style="mask-image:linear-gradient(90deg, transparent, black 8%, black 92%, transparent); -webkit-mask-image:linear-gradient(90deg, transparent, black 8%, black 92%, transparent);">
+      <div class="marquee-track items-center gap-12">
+        <!-- repeat twice for seamless loop -->
+        <span class="text-xl font-semibold tracking-tight text-muted-foreground/80">Docker</span>
+        <span class="text-xl font-semibold tracking-tight text-muted-foreground/80">Traefik</span>
+        <span class="text-xl font-semibold tracking-tight text-muted-foreground/80">Prometheus</span>
+        <span class="text-xl font-semibold tracking-tight text-muted-foreground/80">Loki</span>
+        <span class="text-xl font-semibold tracking-tight text-muted-foreground/80">MinIO</span>
+        <span class="text-xl font-semibold tracking-tight text-muted-foreground/80">Celery</span>
+        <span class="text-xl font-semibold tracking-tight text-muted-foreground/80">Kaniko</span>
+        <span class="text-xl font-semibold tracking-tight text-muted-foreground/80">PostgreSQL</span>
+        <span class="text-xl font-semibold tracking-tight text-muted-foreground/80">Redis</span>
+        <span class="text-xl font-semibold tracking-tight text-muted-foreground/80">cAdvisor</span>
+        <span class="text-xl font-semibold tracking-tight text-muted-foreground/80">Promtail</span>
+        <span class="text-xl font-semibold tracking-tight text-muted-foreground/80">Let's Encrypt</span>
+        <span class="text-xl font-semibold tracking-tight text-muted-foreground/80">Docker</span>
+        <span class="text-xl font-semibold tracking-tight text-muted-foreground/80">Traefik</span>
+        <span class="text-xl font-semibold tracking-tight text-muted-foreground/80">Prometheus</span>
+        <span class="text-xl font-semibold tracking-tight text-muted-foreground/80">Loki</span>
+        <span class="text-xl font-semibold tracking-tight text-muted-foreground/80">MinIO</span>
+        <span class="text-xl font-semibold tracking-tight text-muted-foreground/80">Celery</span>
+        <span class="text-xl font-semibold tracking-tight text-muted-foreground/80">Kaniko</span>
+        <span class="text-xl font-semibold tracking-tight text-muted-foreground/80">PostgreSQL</span>
+        <span class="text-xl font-semibold tracking-tight text-muted-foreground/80">Redis</span>
+        <span class="text-xl font-semibold tracking-tight text-muted-foreground/80">cAdvisor</span>
+        <span class="text-xl font-semibold tracking-tight text-muted-foreground/80">Promtail</span>
+        <span class="text-xl font-semibold tracking-tight text-muted-foreground/80">Let's Encrypt</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Product canvas ===== -->
+<section id="product" class="relative overflow-hidden">
+  <div class="absolute inset-0 dotgrid opacity-50 pointer-events-none"></div>
+  <div class="relative max-w-[1280px] mx-auto px-6 lg:px-8 py-24">
+
+    <div class="grid lg:grid-cols-[1fr_2fr] gap-12 items-end mb-10">
+      <div>
+        <div class="text-[11px] mono uppercase tracking-[0.18em] text-muted-foreground mb-3">01 · The canvas</div>
+        <h2 class="text-4xl md:text-5xl font-semibold tracking-tight leading-[1.05]">Your whole project — on one screen.</h2>
+      </div>
+      <p class="text-lg text-muted-foreground leading-relaxed max-w-xl lg:justify-self-end">
+        Every service, volume, function and dependency lives on an interactive canvas. Real-time status, live arrows, no tab-hunting between five different tools.
+      </p>
+    </div>
+
+    <!-- Canvas mock -->
+    <div class="relative rounded-2xl border hairline bg-card/60 backdrop-blur overflow-hidden">
+      <!-- toolbar -->
+      <div class="px-4 h-11 border-b hairline flex items-center gap-3 bg-background/60">
+        <div class="flex items-center gap-1.5">
+          <span class="w-2.5 h-2.5 rounded-full bg-destructive/70"></span>
+          <span class="w-2.5 h-2.5 rounded-full bg-warning/70"></span>
+          <span class="w-2.5 h-2.5 rounded-full bg-success/70"></span>
+        </div>
+        <div class="mono text-[12px] text-muted-foreground flex items-center gap-2">
+          <span>acme-org</span>
+          <span class="opacity-50">/</span>
+          <span class="text-foreground">checkout-api</span>
+          <span class="opacity-50">/</span>
+          <span class="px-1.5 py-0.5 rounded bg-secondary text-secondary-foreground text-[10px]">production</span>
+        </div>
+        <div class="ml-auto flex items-center gap-2">
+          <span class="inline-flex items-center gap-1.5 rounded-full bg-success/15 text-success px-2.5 py-0.5 text-[11px] font-semibold"><span class="w-1.5 h-1.5 rounded-full bg-success live-dot"></span>all healthy</span>
+          <span class="mono text-[11px] text-muted-foreground hidden md:inline">canvas · v2.4</span>
+        </div>
+      </div>
+
+      <!-- canvas body -->
+      <div class="relative h-[560px] overflow-hidden grid-overlay">
+        <!-- Connector SVG layer -->
+        <svg class="absolute inset-0 w-full h-full" viewBox="0 0 1200 560" preserveAspectRatio="none" aria-hidden="true">
+          <!-- ingress -> api -->
+          <path class="conn-glow" d="M 110 110 C 220 110, 260 180, 370 180" />
+          <!-- api -> worker -->
+          <path class="conn" d="M 520 220 C 620 220, 620 320, 720 320" />
+          <!-- api -> postgres -->
+          <path class="conn" d="M 520 200 C 700 200, 760 130, 880 130" />
+          <!-- api -> redis -->
+          <path class="conn" d="M 520 260 C 700 260, 760 380, 880 380" />
+          <!-- worker -> queue -->
+          <path class="conn" d="M 870 340 C 950 340, 980 450, 1080 450" />
+          <!-- annotations dots -->
+          <circle cx="370" cy="180" r="3" fill="hsl(var(--action))"/>
+          <circle cx="520" cy="220" r="3" fill="hsl(var(--primary))"/>
+          <circle cx="880" cy="130" r="3" fill="hsl(var(--primary))"/>
+          <circle cx="880" cy="380" r="3" fill="hsl(var(--primary))"/>
+          <circle cx="720" cy="320" r="3" fill="hsl(var(--primary))"/>
+        </svg>
+
+        <!-- Ingress chip -->
+        <div class="absolute" style="left:24px; top:80px;">
+          <div class="rounded-lg border hairline bg-background/80 backdrop-blur px-3 py-2 flex items-center gap-2">
+            <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="hsl(var(--action))" stroke-width="2"><path d="M12 2v20M2 12h20"/></svg>
+            <div>
+              <div class="text-[11px] font-semibold leading-none">ingress</div>
+              <div class="mono text-[10px] text-muted-foreground mt-0.5">acme-api.bitsreef.app</div>
+            </div>
+            <span class="ml-2 inline-flex items-center gap-1 rounded-full bg-success/15 text-success px-1.5 py-0.5 text-[9px] font-semibold mono">TLS</span>
+          </div>
+        </div>
+
+        <!-- api service (primary node) -->
+        <div class="absolute" style="left:300px; top:130px; width:230px;">
+          <div class="rounded-xl border bg-card overflow-hidden shadow-lg" style="border-color:hsla(252,100%,64%,0.4)">
+            <div class="px-3 py-2 flex items-center justify-between border-b hairline" style="background:hsla(252,100%,64%,0.08)">
+              <div class="flex items-center gap-2">
+                <div class="w-5 h-5 rounded-md bg-primary/20 grid place-items-center"><div class="w-2 h-2 bg-primary rounded-sm"></div></div>
+                <span class="text-[12px] font-semibold">checkout-api</span>
+              </div>
+              <span class="inline-flex items-center gap-1.5 rounded-full bg-success/15 text-success px-2 py-0.5 text-[10px] font-semibold"><span class="w-1.5 h-1.5 rounded-full bg-success"></span>live</span>
+            </div>
+            <div class="p-3 space-y-2">
+              <div class="flex items-center justify-between text-[11px]"><span class="mono text-muted-foreground">replicas</span><span class="font-medium">4 / 6</span></div>
+              <div class="flex items-center justify-between text-[11px]"><span class="mono text-muted-foreground">cpu</span>
+                <span class="flex items-center gap-1.5">
+                  <span class="w-16 h-1.5 rounded-full bg-secondary overflow-hidden"><span class="block h-full" style="width:62%; background:hsl(var(--action))"></span></span>
+                  <span class="mono">62%</span>
+                </span>
+              </div>
+              <div class="flex items-center justify-between text-[11px]"><span class="mono text-muted-foreground">mem</span>
+                <span class="flex items-center gap-1.5">
+                  <span class="w-16 h-1.5 rounded-full bg-secondary overflow-hidden"><span class="block h-full" style="width:41%; background:hsl(var(--primary))"></span></span>
+                  <span class="mono">41%</span>
+                </span>
+              </div>
+              <div class="flex items-center justify-between text-[11px]"><span class="mono text-muted-foreground">image</span><span class="mono text-[10px]">acme/api:7f3c2a1</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- postgres node -->
+        <div class="absolute" style="left:850px; top:78px; width:200px;">
+          <div class="rounded-xl border hairline bg-card shadow-md">
+            <div class="px-3 py-2 flex items-center justify-between border-b hairline">
+              <div class="flex items-center gap-2">
+                <div class="w-5 h-5 rounded-md grid place-items-center" style="background:hsla(190,100%,50%,0.15)"><div class="w-2 h-2 rounded-sm" style="background:hsl(var(--cyan))"></div></div>
+                <span class="text-[12px] font-semibold">postgres</span>
+              </div>
+              <span class="inline-flex items-center gap-1 rounded-full bg-info/15 text-info px-2 py-0.5 text-[10px] font-semibold mono">15.3</span>
+            </div>
+            <div class="p-3 space-y-1.5 text-[11px]">
+              <div class="flex justify-between"><span class="mono text-muted-foreground">storage</span><span class="font-medium">24.1 / 50 GB</span></div>
+              <div class="flex justify-between"><span class="mono text-muted-foreground">conn</span><span class="font-medium">38</span></div>
+              <div class="flex justify-between"><span class="mono text-muted-foreground">backup</span><span class="font-medium">12m ago</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- redis node -->
+        <div class="absolute" style="left:850px; top:340px; width:200px;">
+          <div class="rounded-xl border hairline bg-card shadow-md">
+            <div class="px-3 py-2 flex items-center justify-between border-b hairline">
+              <div class="flex items-center gap-2">
+                <div class="w-5 h-5 rounded-md grid place-items-center" style="background:hsla(326,100%,62%,0.15)"><div class="w-2 h-2 rounded-sm" style="background:hsl(var(--pink))"></div></div>
+                <span class="text-[12px] font-semibold">redis</span>
+              </div>
+              <span class="inline-flex items-center gap-1 rounded-full bg-success/15 text-success px-2 py-0.5 text-[10px] font-semibold mono">cache</span>
+            </div>
+            <div class="p-3 space-y-1.5 text-[11px]">
+              <div class="flex justify-between"><span class="mono text-muted-foreground">ops/s</span><span class="font-medium">12.4k</span></div>
+              <div class="flex justify-between"><span class="mono text-muted-foreground">hit rate</span><span class="font-medium" style="color:hsl(var(--action))">94%</span></div>
+              <div class="flex justify-between"><span class="mono text-muted-foreground">mem</span><span class="font-medium">128 MB</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- worker node -->
+        <div class="absolute" style="left:680px; top:280px; width:200px;">
+          <div class="rounded-xl border hairline bg-card shadow-md">
+            <div class="px-3 py-2 flex items-center justify-between border-b hairline">
+              <div class="flex items-center gap-2">
+                <div class="w-5 h-5 rounded-md bg-amber/20 grid place-items-center"><div class="w-2 h-2 rounded-sm bg-amber"></div></div>
+                <span class="text-[12px] font-semibold">worker</span>
+              </div>
+              <span class="inline-flex items-center gap-1.5 rounded-full bg-warning/15 text-warning px-2 py-0.5 text-[10px] font-semibold"><span class="w-1.5 h-1.5 rounded-full bg-warning"></span>busy</span>
+            </div>
+            <div class="p-3 space-y-1.5 text-[11px]">
+              <div class="flex justify-between"><span class="mono text-muted-foreground">queue</span><span class="font-medium">147 jobs</span></div>
+              <div class="flex justify-between"><span class="mono text-muted-foreground">replicas</span><span class="font-medium">2 → 5</span></div>
+              <div class="flex justify-between"><span class="mono text-muted-foreground">cpu</span><span class="font-medium" style="color:hsl(var(--warning))">88%</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- queue node -->
+        <div class="absolute" style="left:1050px; top:410px; width:140px;">
+          <div class="rounded-xl border hairline bg-card shadow-md">
+            <div class="px-3 py-2 flex items-center gap-2">
+              <div class="w-5 h-5 rounded-md grid place-items-center" style="background:hsla(252,100%,64%,0.15)"><div class="w-2 h-2 rounded-sm bg-primary"></div></div>
+              <span class="text-[12px] font-semibold">rabbitmq</span>
+            </div>
+            <div class="px-3 pb-3 text-[11px] mono text-muted-foreground">amqp · 5672</div>
+          </div>
+        </div>
+
+        <!-- functions sidebar chip -->
+        <div class="absolute" style="right:24px; top:24px;">
+          <div class="rounded-lg border hairline bg-background/80 backdrop-blur px-3 py-2 flex items-center gap-2">
+            <svg viewBox="0 0 24 24" class="w-4 h-4 text-primary" fill="none" stroke="currentColor" stroke-width="2"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            <span class="text-[11px] font-semibold">3 functions</span>
+            <span class="mono text-[10px] text-muted-foreground">· cron · webhook</span>
+          </div>
+        </div>
+
+        <!-- log strip overlay -->
+        <div class="absolute left-6 right-6 bottom-6 rounded-lg border hairline bg-background/85 backdrop-blur p-3">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span class="w-1.5 h-1.5 rounded-full live-dot" style="background:hsl(var(--action))"></span>
+              <span class="text-[11px] font-semibold">live logs</span>
+              <span class="mono text-[10px] text-muted-foreground">· checkout-api · all replicas</span>
+            </div>
+            <span class="mono text-[10px] text-muted-foreground hidden md:inline">tail · 200 lines · auto-scroll on</span>
+          </div>
+          <div class="mono text-[11px] space-y-1 leading-relaxed">
+            <div class="flex gap-3"><span class="text-muted-foreground">14:22:01</span><span class="text-info shrink-0">INFO</span><span class="truncate">POST /checkout · 201 · 42ms · req_8f2a</span></div>
+            <div class="flex gap-3"><span class="text-muted-foreground">14:22:01</span><span class="text-success shrink-0">OK  </span><span class="truncate">autoscaler · worker 2 → 5 replicas (cpu 88%)</span></div>
+            <div class="flex gap-3"><span class="text-muted-foreground">14:22:03</span><span class="text-warning shrink-0">WARN</span><span class="truncate">node-04 cpu pressure 87% · monitoring</span></div>
+            <div class="flex gap-3"><span class="text-muted-foreground">14:22:04</span><span class="text-foreground shrink-0">    </span><span class="truncate">traefik · acme-api.bitsreef.app · cert renewed (89d remaining)</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ===== How it works ===== -->
+<section id="how" class="border-t hairline bg-panel/30">
+  <div class="max-w-[1280px] mx-auto px-6 lg:px-8 py-24">
+    <div class="grid lg:grid-cols-[1fr_2fr] gap-12 items-end mb-14">
+      <div>
+        <div class="text-[11px] mono uppercase tracking-[0.18em] text-muted-foreground mb-3">02 · How it works</div>
+        <h2 class="text-4xl md:text-5xl font-semibold tracking-tight leading-[1.05]">From git push to a public URL.</h2>
+      </div>
+      <p class="text-lg text-muted-foreground leading-relaxed max-w-xl lg:justify-self-end">
+        Four steps. No proxy config. No certificate dance. No "works on the build server" surprises.
+      </p>
+    </div>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- step 1 -->
+      <div class="rounded-xl border hairline bg-card p-5 flex flex-col">
+        <div class="flex items-center justify-between mb-4">
+          <span class="mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">step 01</span>
+          <span class="mono text-[10px] text-muted-foreground">~ 10s</span>
+        </div>
+        <h3 class="text-xl font-semibold leading-tight">Connect a repo</h3>
+        <p class="mt-2 text-[13px] text-muted-foreground leading-relaxed">GitHub or GitLab OAuth. Pick branch and root, set auto-deploy on push.</p>
+        <div class="mt-5 rounded-lg border hairline bg-background p-3 mono text-[11px] leading-relaxed">
+          <div class="flex items-center gap-2">
+            <svg viewBox="0 0 16 16" class="w-3.5 h-3.5" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 005.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+            acme/checkout-api
+          </div>
+          <div class="text-muted-foreground mt-1.5">branch · <span class="text-foreground">main</span></div>
+          <div class="text-muted-foreground">auto-deploy · <span style="color:hsl(var(--action))">on</span></div>
+        </div>
+      </div>
+
+      <!-- step 2 -->
+      <div class="rounded-xl border hairline bg-card p-5 flex flex-col">
+        <div class="flex items-center justify-between mb-4">
+          <span class="mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">step 02</span>
+          <span class="mono text-[10px] text-muted-foreground">~ 1–2 min</span>
+        </div>
+        <h3 class="text-xl font-semibold leading-tight">Kaniko builds</h3>
+        <p class="mt-2 text-[13px] text-muted-foreground leading-relaxed">Image built in a non-privileged container, layer-cached, pushed to the internal registry.</p>
+        <div class="mt-5 rounded-lg border hairline bg-background p-3 mono text-[11px] leading-relaxed space-y-0.5">
+          <div><span class="text-success">✓</span> <span class="text-muted-foreground">step 1/6</span> · FROM node:20-alpine</div>
+          <div><span class="text-success">✓</span> <span class="text-muted-foreground">step 2/6</span> · COPY . /app</div>
+          <div><span class="text-success">✓</span> <span class="text-muted-foreground">step 3/6</span> · RUN npm ci</div>
+          <div><span class="text-warning">●</span> <span class="text-muted-foreground">step 4/6</span> · RUN npm run build</div>
+          <div class="text-muted-foreground">cached · 412 MB · pushed in 11s</div>
+        </div>
+      </div>
+
+      <!-- step 3 -->
+      <div class="rounded-xl border hairline bg-card p-5 flex flex-col">
+        <div class="flex items-center justify-between mb-4">
+          <span class="mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">step 03</span>
+          <span class="mono text-[10px] text-muted-foreground">~ 30s</span>
+        </div>
+        <h3 class="text-xl font-semibold leading-tight">Traefik routes</h3>
+        <p class="mt-2 text-[13px] text-muted-foreground leading-relaxed">New containers come up. Health-checked, then Traefik shifts traffic. Let's Encrypt cert issued in the same step.</p>
+        <div class="mt-5 rounded-lg border hairline bg-background p-3 mono text-[11px] leading-relaxed space-y-0.5">
+          <div class="flex items-center justify-between"><span>health</span><span style="color:hsl(var(--action))">200 OK</span></div>
+          <div class="flex items-center justify-between"><span>drain</span><span>30s</span></div>
+          <div class="flex items-center justify-between"><span>tls</span><span style="color:hsl(var(--action))">letsencrypt · ECDSA-256</span></div>
+          <div class="text-muted-foreground mt-1">old · v0.4.1 (drained) → new · v0.4.2 (live)</div>
+        </div>
+      </div>
+
+      <!-- step 4 -->
+      <div class="rounded-xl border hairline bg-card p-5 flex flex-col">
+        <div class="flex items-center justify-between mb-4">
+          <span class="mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">step 04</span>
+          <span class="mono text-[10px] text-muted-foreground">∞</span>
+        </div>
+        <h3 class="text-xl font-semibold leading-tight">Live, autoscaled</h3>
+        <p class="mt-2 text-[13px] text-muted-foreground leading-relaxed">Metrics streaming. Autoscaler watching. Rollback waiting in case the next push lies to you.</p>
+        <div class="mt-5 rounded-lg border hairline bg-background p-3 mono text-[11px] leading-relaxed space-y-1">
+          <div class="flex items-center justify-between"><span>url</span><span class="truncate" style="color:hsl(var(--action))">acme-api.bitsreef.app</span></div>
+          <div class="flex items-center gap-2"><span>p95</span>
+            <span class="flex-1 h-1 rounded bg-secondary overflow-hidden"><span class="block h-full" style="width:30%; background:hsl(var(--action))"></span></span>
+            <span>62ms</span>
+          </div>
+          <div class="flex items-center gap-2"><span>cpu</span>
+            <span class="flex-1 h-1 rounded bg-secondary overflow-hidden"><span class="block h-full" style="width:42%; background:hsl(var(--primary))"></span></span>
+            <span>42%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Features grid ===== -->
+<section id="features" class="border-t hairline">
+  <div class="max-w-[1280px] mx-auto px-6 lg:px-8 py-24">
+    <div class="grid lg:grid-cols-[1fr_2fr] gap-12 items-end mb-14">
+      <div>
+        <div class="text-[11px] mono uppercase tracking-[0.18em] text-muted-foreground mb-3">03 · Features</div>
+        <h2 class="text-4xl md:text-5xl font-semibold tracking-tight leading-[1.05]">One platform. The whole stack.</h2>
+      </div>
+      <p class="text-lg text-muted-foreground leading-relaxed max-w-xl lg:justify-self-end">
+        Containers, functions, cron, storage, networking, autoscale, alerts, billing. Built together — not stitched.
+      </p>
+    </div>
+
+    <!-- Feature: big two -->
+    <div class="grid lg:grid-cols-5 gap-4 mb-4">
+      <!-- Deploy from anywhere -->
+      <div class="lg:col-span-3 rounded-2xl border hairline bg-card overflow-hidden">
+        <div class="p-7 pb-3">
+          <div class="flex items-center gap-2 mb-4">
+            <span class="mono text-[10px] uppercase tracking-[0.18em] text-primary">Deploy</span>
+            <span class="w-1 h-1 rounded-full bg-muted-foreground/50"></span>
+            <span class="mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">three sources, one button</span>
+          </div>
+          <h3 class="text-2xl font-semibold tracking-tight">Git, image, template — same flow.</h3>
+          <p class="mt-2 text-muted-foreground text-[14px] leading-relaxed max-w-md">Connect a repo, point at any registry image, or pick a template (Postgres, Redis, Mongo…). The next screen is the same dashboard.</p>
+        </div>
+        <div class="px-7 pb-7">
+          <div class="grid grid-cols-3 gap-2">
+            <div class="rounded-lg border hairline p-3 bg-background">
+              <div class="flex items-center gap-2 mb-2">
+                <svg viewBox="0 0 16 16" class="w-3.5 h-3.5 text-muted-foreground" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 005.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+                <span class="text-[12px] font-semibold">Git</span>
+              </div>
+              <div class="mono text-[10px] text-muted-foreground leading-relaxed">github · gitlab · auto-deploy on push · kaniko build</div>
+            </div>
+            <div class="rounded-lg border hairline p-3 bg-background">
+              <div class="flex items-center gap-2 mb-2">
+                <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 text-muted-foreground" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+                <span class="text-[12px] font-semibold">Image</span>
+              </div>
+              <div class="mono text-[10px] text-muted-foreground leading-relaxed">docker hub · ghcr · ecr · gcr · private registries</div>
+            </div>
+            <div class="rounded-lg border hairline p-3 bg-background">
+              <div class="flex items-center gap-2 mb-2">
+                <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 text-muted-foreground" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v6H4zM4 14h16v6H4z"/></svg>
+                <span class="text-[12px] font-semibold">Template</span>
+              </div>
+              <div class="mono text-[10px] text-muted-foreground leading-relaxed">postgres · redis · mongo · mysql · rabbitmq · minio</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Zero-downtime -->
+      <div class="lg:col-span-2 rounded-2xl border hairline bg-card overflow-hidden">
+        <div class="p-7 pb-3">
+          <div class="flex items-center gap-2 mb-4">
+            <span class="mono text-[10px] uppercase tracking-[0.18em]" style="color:hsl(var(--action))">Resilience</span>
+            <span class="w-1 h-1 rounded-full bg-muted-foreground/50"></span>
+            <span class="mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">zero-downtime + auto-rollback</span>
+          </div>
+          <h3 class="text-2xl font-semibold tracking-tight">If it fails, it goes back.</h3>
+          <p class="mt-2 text-muted-foreground text-[14px] leading-relaxed">Health-checked rollouts. Drain old containers. Failed deploy → automatic rollback to the last green version. One-click to any previous deploy.</p>
+        </div>
+        <div class="px-7 pb-7">
+          <div class="rounded-lg border hairline bg-background p-3 mono text-[11px] space-y-1.5">
+            <div class="flex justify-between"><span class="text-muted-foreground">v0.4.2</span><span style="color:hsl(var(--action))">● live</span></div>
+            <div class="flex justify-between"><span class="text-muted-foreground">v0.4.1</span><span class="text-info">draining 12s</span></div>
+            <div class="flex justify-between"><span class="text-muted-foreground">v0.4.0</span><span class="text-muted-foreground">archived · 2h ago</span></div>
+            <div class="flex justify-between"><span class="text-muted-foreground">v0.3.9</span><span class="text-destructive">failed → rolled back</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feature row 2: 3-up -->
+    <div class="grid md:grid-cols-3 gap-4 mb-4">
+      <!-- Networking & SSL -->
+      <div class="rounded-2xl border hairline bg-card p-7">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="mono text-[10px] uppercase tracking-[0.18em] text-info">Networking</span>
+        </div>
+        <h3 class="text-xl font-semibold">Custom domains, auto-SSL, private DNS.</h3>
+        <p class="mt-2 text-[13px] text-muted-foreground leading-relaxed">Every service gets a subdomain. Add your own — DNS verified, cert issued, renewed forever.</p>
+        <div class="mt-5 rounded-lg border hairline bg-background p-3 mono text-[11px] space-y-1.5">
+          <div class="flex items-center justify-between"><span class="truncate">api.acme.com</span><span class="inline-flex items-center gap-1 rounded-full bg-success/15 text-success px-1.5 py-0.5 text-[10px] font-semibold">verified</span></div>
+          <div class="flex items-center justify-between"><span class="truncate">acme-api.bitsreef.app</span><span class="inline-flex items-center gap-1 rounded-full bg-info/15 text-info px-1.5 py-0.5 text-[10px] font-semibold">default</span></div>
+          <div class="flex items-center justify-between"><span class="truncate text-muted-foreground">checkout.acme.com</span><span class="inline-flex items-center gap-1 rounded-full bg-warning/15 text-warning px-1.5 py-0.5 text-[10px] font-semibold">DNS pending</span></div>
+        </div>
+      </div>
+
+      <!-- Autoscale -->
+      <div class="rounded-2xl border hairline bg-card p-7">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="mono text-[10px] uppercase tracking-[0.18em]" style="color:hsl(var(--action))">Autoscale</span>
+        </div>
+        <h3 class="text-xl font-semibold">Up. Down. To zero.</h3>
+        <p class="mt-2 text-[13px] text-muted-foreground leading-relaxed">Horizontal autoscaler evaluates every 30 seconds. Quiet services scale-to-zero and wake on the first request.</p>
+        <div class="mt-5 rounded-lg border hairline bg-background p-3">
+          <div class="flex items-end gap-1 h-14">
+            <span class="flex-1 rounded-t bg-primary/50" style="height:30%"></span>
+            <span class="flex-1 rounded-t bg-primary/60" style="height:45%"></span>
+            <span class="flex-1 rounded-t bg-primary/70" style="height:35%"></span>
+            <span class="flex-1 rounded-t bg-primary/80" style="height:62%"></span>
+            <span class="flex-1 rounded-t" style="height:90%; background:hsl(var(--action))"></span>
+            <span class="flex-1 rounded-t" style="height:80%; background:hsl(var(--action))"></span>
+            <span class="flex-1 rounded-t bg-primary/80" style="height:50%"></span>
+            <span class="flex-1 rounded-t bg-primary/60" style="height:35%"></span>
+            <span class="flex-1 rounded-t bg-primary/50" style="height:22%"></span>
+            <span class="flex-1 rounded-t bg-muted" style="height:12%"></span>
+            <span class="flex-1 rounded-t bg-muted" style="height:8%"></span>
+            <span class="flex-1 rounded-t bg-muted" style="height:4%"></span>
+          </div>
+          <div class="flex items-center justify-between mt-2 mono text-[10px] text-muted-foreground">
+            <span>2 ↗ 8 replicas</span>
+            <span style="color:hsl(var(--action))">scale-to-zero · 15m idle</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Logs -->
+      <div class="rounded-2xl border hairline bg-card p-7">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="mono text-[10px] uppercase tracking-[0.18em] text-pink">Observability</span>
+        </div>
+        <h3 class="text-xl font-semibold">Live logs, parsed.</h3>
+        <p class="mt-2 text-[13px] text-muted-foreground leading-relaxed">WebSocket tail across every replica. JSON auto-parsed and severity-coloured. Search the whole org with one query.</p>
+        <div class="mt-5 rounded-lg border hairline bg-background p-3 mono text-[10px] leading-relaxed space-y-0.5">
+          <div><span class="text-muted-foreground">14:22:01</span> <span class="text-info">INFO</span> reconcile() · 6/6 healthy</div>
+          <div><span class="text-muted-foreground">14:22:03</span> <span class="text-warning">WARN</span> node-04 cpu 87%</div>
+          <div><span class="text-muted-foreground">14:22:04</span> <span class="text-destructive">ERR </span> conn refused 10.0.4.21:5432</div>
+          <div><span class="text-muted-foreground">14:22:05</span> <span class="text-foreground">    </span> retry in 4s · 2/5</div>
+          <div><span class="text-muted-foreground">14:22:09</span> <span class="text-success">OK  </span> reconnected</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feature row 3: 4-up smaller -->
+    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="rounded-2xl border hairline bg-card p-6">
+        <div class="w-9 h-9 rounded-lg grid place-items-center mb-4" style="background:hsla(252,100%,64%,0.15)">
+          <svg viewBox="0 0 24 24" class="w-4 h-4 text-primary" fill="none" stroke="currentColor" stroke-width="2"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </div>
+        <h3 class="text-base font-semibold">Functions</h3>
+        <p class="mt-1.5 text-[12px] text-muted-foreground leading-relaxed">One-file workloads in Bun, Deno, Python, or Node. HTTP-triggered or cron. <span class="mono text-foreground">X-Function-Key</span> for external systems.</p>
+      </div>
+      <div class="rounded-2xl border hairline bg-card p-6">
+        <div class="w-9 h-9 rounded-lg grid place-items-center mb-4" style="background:hsla(190,100%,50%,0.15)">
+          <svg viewBox="0 0 24 24" class="w-4 h-4 text-info" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v6c0 1.7 4 3 9 3s9-1.3 9-3V5M3 11v6c0 1.7 4 3 9 3s9-1.3 9-3v-6"/></svg>
+        </div>
+        <h3 class="text-base font-semibold">S3 buckets</h3>
+        <p class="mt-1.5 text-[12px] text-muted-foreground leading-relaxed">MinIO inside, S3 API outside. Public buckets, per-bucket keys, in-browser file explorer.</p>
+      </div>
+      <div class="rounded-2xl border hairline bg-card p-6">
+        <div class="w-9 h-9 rounded-lg grid place-items-center mb-4" style="background:hsla(43,100%,50%,0.15)">
+          <svg viewBox="0 0 24 24" class="w-4 h-4 text-amber" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <h3 class="text-base font-semibold">Cron jobs</h3>
+        <p class="mt-1.5 text-[12px] text-muted-foreground leading-relaxed">Run commands inside your running containers on a schedule. Output, exit code and duration logged per run.</p>
+      </div>
+      <div class="rounded-2xl border hairline bg-card p-6">
+        <div class="w-9 h-9 rounded-lg grid place-items-center mb-4" style="background:hsla(326,100%,62%,0.15)">
+          <svg viewBox="0 0 24 24" class="w-4 h-4 text-pink" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <h3 class="text-base font-semibold">Teams + audit</h3>
+        <p class="mt-1.5 text-[12px] text-muted-foreground leading-relaxed">Viewer / Member / Admin / Owner. Every mutation written to an immutable audit log with IP and timestamp.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Variables / environments ===== -->
+<section class="border-t hairline">
+  <div class="max-w-[1280px] mx-auto px-6 lg:px-8 py-24 grid lg:grid-cols-2 gap-16 items-center">
+    <div>
+      <div class="text-[11px] mono uppercase tracking-[0.18em] text-muted-foreground mb-3">04 · Environments</div>
+      <h2 class="text-4xl md:text-5xl font-semibold tracking-tight leading-[1.05]">Variables<br/>that <span class="text-muted-foreground/70">inherit, mask,</span><br/>and stop leaking.</h2>
+      <p class="mt-6 text-lg text-muted-foreground leading-relaxed max-w-lg">
+        Four layers — project-global, project-environment, service-global, service-environment. Secrets are masked in the UI and API. A dedicated reveal endpoint logs every read.
+      </p>
+      <div class="mt-8 grid sm:grid-cols-2 gap-4 max-w-lg">
+        <div class="rounded-lg border hairline bg-card p-4">
+          <div class="mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-1">bulk import</div>
+          <div class="text-[13px]">Paste an entire <span class="mono">.env</span>. Diff before commit.</div>
+        </div>
+        <div class="rounded-lg border hairline bg-card p-4">
+          <div class="mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-1">private url</div>
+          <div class="text-[13px]"><span class="mono">DATABASE_URL</span> stays inside the project network.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Variables visualization -->
+    <div class="rounded-2xl border hairline bg-card overflow-hidden">
+      <div class="px-5 h-11 border-b hairline flex items-center gap-3">
+        <span class="text-[12px] font-semibold">Variables</span>
+        <span class="mono text-[11px] text-muted-foreground">· checkout-api · production</span>
+        <span class="ml-auto inline-flex items-center gap-1 rounded-md border hairline px-2 py-0.5 text-[10px] mono">4 layers</span>
+      </div>
+      <div class="p-5 space-y-3">
+        <!-- layer 1 -->
+        <div class="rounded-lg border hairline bg-background overflow-hidden">
+          <div class="px-3 py-2 flex items-center justify-between" style="background:hsla(252,100%,64%,0.07)">
+            <span class="mono text-[10px] uppercase tracking-[0.18em] text-primary">layer 1 · project global</span>
+            <span class="mono text-[10px] text-muted-foreground">3 vars</span>
+          </div>
+          <div class="mono text-[11px] divide-y divide-border/40">
+            <div class="px-3 py-2 flex justify-between"><span>NODE_ENV</span><span class="text-muted-foreground">production</span></div>
+            <div class="px-3 py-2 flex justify-between"><span>LOG_LEVEL</span><span class="text-muted-foreground">info</span></div>
+            <div class="px-3 py-2 flex justify-between"><span>SENTRY_DSN</span><span class="text-muted-foreground">••••••••••••••</span></div>
+          </div>
+        </div>
+        <!-- layer 2 -->
+        <div class="rounded-lg border hairline bg-background overflow-hidden">
+          <div class="px-3 py-2 flex items-center justify-between" style="background:hsla(190,100%,50%,0.06)">
+            <span class="mono text-[10px] uppercase tracking-[0.18em] text-info">layer 2 · project · production</span>
+            <span class="mono text-[10px] text-muted-foreground">2 vars</span>
+          </div>
+          <div class="mono text-[11px] divide-y divide-border/40">
+            <div class="px-3 py-2 flex justify-between"><span>STRIPE_KEY</span><span class="text-muted-foreground">••••••••••••••</span></div>
+            <div class="px-3 py-2 flex justify-between"><span>FEATURE_PAYMENTS</span><span class="text-muted-foreground">true</span></div>
+          </div>
+        </div>
+        <!-- layer 3 -->
+        <div class="rounded-lg border hairline bg-background overflow-hidden">
+          <div class="px-3 py-2 flex items-center justify-between" style="background:hsla(43,100%,50%,0.06)">
+            <span class="mono text-[10px] uppercase tracking-[0.18em] text-amber">layer 3 · service global</span>
+            <span class="mono text-[10px] text-muted-foreground">1 var</span>
+          </div>
+          <div class="mono text-[11px] divide-y divide-border/40">
+            <div class="px-3 py-2 flex justify-between"><span>PORT</span><span class="text-muted-foreground">3000</span></div>
+          </div>
+        </div>
+        <!-- layer 4 - winning -->
+        <div class="rounded-lg border overflow-hidden" style="border-color:hsla(158,100%,50%,0.4)">
+          <div class="px-3 py-2 flex items-center justify-between" style="background:hsla(158,100%,50%,0.08)">
+            <span class="mono text-[10px] uppercase tracking-[0.18em]" style="color:hsl(var(--action))">layer 4 · service · production · wins</span>
+            <span class="mono text-[10px]" style="color:hsl(var(--action))">2 vars</span>
+          </div>
+          <div class="mono text-[11px] divide-y divide-border/40">
+            <div class="px-3 py-2 flex justify-between"><span>DATABASE_URL</span><span class="text-muted-foreground">••••••••••••••</span></div>
+            <div class="px-3 py-2 flex justify-between"><span>REDIS_URL</span><span class="text-muted-foreground">redis://redis.internal:6379</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Pricing ===== -->
+<section id="pricing" class="border-t hairline bg-panel/30">
+  <div class="max-w-[1280px] mx-auto px-6 lg:px-8 py-24">
+    <div class="text-center max-w-2xl mx-auto mb-14">
+      <div class="text-[11px] mono uppercase tracking-[0.18em] text-muted-foreground mb-3">05 · Pricing</div>
+      <h2 class="text-4xl md:text-5xl font-semibold tracking-tight leading-[1.05]">Your subscription <span class="text-muted-foreground/70">is your credit.</span></h2>
+      <p class="mt-5 text-lg text-muted-foreground leading-relaxed">
+        Pay one number a month. Use less than it — invoice stays flat at the subscription. Use more — only the overage is added. Compute is billed per minute, never per hour.
+      </p>
+      <p class="mt-3 text-[13px] mono text-muted-foreground">New accounts get a one-time $5 credit, valid 30 days. No card required.</p>
+    </div>
+
+    <!-- Subscription-as-credit explainer -->
+    <div class="mb-12 rounded-2xl border hairline bg-card p-6 max-w-3xl mx-auto">
+      <div class="grid sm:grid-cols-3 gap-4 mono text-[12px]">
+        <div class="rounded-lg border hairline bg-background p-4">
+          <div class="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Hobby · $5/mo</div>
+          <div class="mt-2 text-lg text-foreground">Used <span style="color:hsl(var(--action))">$2.40</span></div>
+          <div class="text-muted-foreground">Invoice <span class="text-foreground">$5.00</span></div>
+          <div class="mt-2 h-1.5 rounded-full bg-secondary overflow-hidden"><span class="block h-full" style="width:48%; background:hsl(var(--action))"></span></div>
+        </div>
+        <div class="rounded-lg border hairline bg-background p-4">
+          <div class="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Hobby · $5/mo</div>
+          <div class="mt-2 text-lg text-foreground">Used <span style="color:hsl(var(--action))">$5.00</span></div>
+          <div class="text-muted-foreground">Invoice <span class="text-foreground">$5.00</span></div>
+          <div class="mt-2 h-1.5 rounded-full bg-secondary overflow-hidden"><span class="block h-full" style="width:100%; background:hsl(var(--action))"></span></div>
+        </div>
+        <div class="rounded-lg border hairline bg-background p-4">
+          <div class="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Hobby · $5/mo</div>
+          <div class="mt-2 text-lg text-foreground">Used <span class="text-pink">$12.30</span></div>
+          <div class="text-muted-foreground">Invoice <span class="text-foreground">$12.30</span> · <span class="text-pink">$7.30 overage</span></div>
+          <div class="mt-2 h-1.5 rounded-full bg-secondary overflow-hidden flex"><span class="block h-full" style="width:40%; background:hsl(var(--action))"></span><span class="block h-full" style="width:60%; background:hsl(var(--pink))"></span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Plan cards -->
+    <div class="grid lg:grid-cols-4 gap-4">
+      <!-- Free -->
+      <div class="rounded-2xl border hairline bg-card overflow-hidden flex flex-col">
+        <div class="p-6 pb-4 border-b hairline">
+          <div class="flex items-baseline justify-between">
+            <div class="text-base font-semibold">Free</div>
+            <div class="mono text-[10px] text-muted-foreground">community</div>
+          </div>
+          <div class="mt-3 flex items-baseline gap-1">
+            <span class="text-4xl font-semibold">$0</span>
+            <span class="text-muted-foreground text-sm">/ month</span>
+          </div>
+          <div class="mt-1.5 text-[12px] text-muted-foreground">$1/mo usage credit · no card</div>
+        </div>
+        <ul class="p-6 space-y-2.5 text-[13px] flex-1">
+          <li class="flex gap-2"><span class="text-muted-foreground mono">·</span> 3 services, 2 projects</li>
+          <li class="flex gap-2"><span class="text-muted-foreground mono">·</span> 512 MB RAM · 1 vCPU total</li>
+          <li class="flex gap-2"><span class="text-muted-foreground mono">·</span> Auto-sleep after 15 min idle</li>
+          <li class="flex gap-2"><span class="text-muted-foreground mono">·</span> 1 member · 24h image retention</li>
+          <li class="flex gap-2"><span class="text-muted-foreground mono">·</span> Community support</li>
+        </ul>
+        <div class="p-6 pt-0">
+          <a class="inline-flex w-full justify-center items-center h-10 rounded-md border border-input hover:bg-accent text-[13px] font-medium transition-colors" href="#">Start free</a>
+        </div>
+      </div>
+
+      <!-- Hobby -->
+      <div class="rounded-2xl border hairline bg-card overflow-hidden flex flex-col">
+        <div class="p-6 pb-4 border-b hairline">
+          <div class="flex items-baseline justify-between">
+            <div class="text-base font-semibold">Hobby</div>
+            <div class="mono text-[10px] text-muted-foreground">indie</div>
+          </div>
+          <div class="mt-3 flex items-baseline gap-1">
+            <span class="text-4xl font-semibold">$5</span>
+            <span class="text-muted-foreground text-sm">/ month</span>
+          </div>
+          <div class="mt-1.5 text-[12px] text-muted-foreground">$5/mo usage credit · billed per minute</div>
+        </div>
+        <ul class="p-6 space-y-2.5 text-[13px] flex-1">
+          <li class="flex gap-2"><span class="text-muted-foreground mono">·</span> 25 services, 10 projects</li>
+          <li class="flex gap-2"><span class="text-muted-foreground mono">·</span> 48 GB RAM · 48 vCPU total</li>
+          <li class="flex gap-2"><span class="text-muted-foreground mono">·</span> Up to 6 replicas per service</li>
+          <li class="flex gap-2"><span class="text-muted-foreground mono">·</span> 5 GB volumes · 3 members</li>
+          <li class="flex gap-2"><span class="text-muted-foreground mono">·</span> 72h image retention · standard support</li>
+        </ul>
+        <div class="p-6 pt-0">
+          <a class="inline-flex w-full justify-center items-center h-10 rounded-md border border-input hover:bg-accent text-[13px] font-medium transition-colors" href="#">Start hobby</a>
+        </div>
+      </div>
+
+      <!-- Pro - featured -->
+      <div class="relative rounded-2xl border bg-card overflow-hidden flex flex-col" style="border-color:hsla(158,100%,50%,0.5); box-shadow: 0 0 0 1px hsla(158,100%,50%,0.3), 0 30px 80px -30px hsla(158,100%,50%,0.4)">
+        <div class="absolute top-0 right-0 px-3 py-1 mono text-[10px] uppercase tracking-[0.18em] rounded-bl-md" style="background:hsl(var(--action)); color:#002B1F">most teams</div>
+        <div class="p-6 pb-4 border-b hairline">
+          <div class="flex items-baseline justify-between">
+            <div class="text-base font-semibold">Pro</div>
+            <div class="mono text-[10px] text-muted-foreground">scale</div>
+          </div>
+          <div class="mt-3 flex items-baseline gap-1">
+            <span class="text-4xl font-semibold">$20</span>
+            <span class="text-muted-foreground text-sm">/ month</span>
+          </div>
+          <div class="mt-1.5 text-[12px] text-muted-foreground">$20/mo usage credit · members free</div>
+        </div>
+        <ul class="p-6 space-y-2.5 text-[13px] flex-1">
+          <li class="flex gap-2"><span class="mono" style="color:hsl(var(--action))">●</span> 500 services, unlimited projects</li>
+          <li class="flex gap-2"><span class="mono" style="color:hsl(var(--action))">●</span> 1 TB RAM · 1,000 vCPU total</li>
+          <li class="flex gap-2"><span class="mono" style="color:hsl(var(--action))">●</span> Up to 42 replicas per service</li>
+          <li class="flex gap-2"><span class="mono" style="color:hsl(var(--action))">●</span> 1 TB volumes · unlimited members</li>
+          <li class="flex gap-2"><span class="mono" style="color:hsl(var(--action))">●</span> 120h image retention · priority support</li>
+        </ul>
+        <div class="p-6 pt-0">
+          <a class="inline-flex w-full justify-center items-center h-10 rounded-md text-[13px] font-semibold transition-colors btn-glow" style="background:hsl(var(--action));color:#002B1F" href="#">Go Pro</a>
+        </div>
+      </div>
+
+      <!-- Enterprise -->
+      <div class="rounded-2xl border hairline bg-card overflow-hidden flex flex-col">
+        <div class="p-6 pb-4 border-b hairline">
+          <div class="flex items-baseline justify-between">
+            <div class="text-base font-semibold">Enterprise</div>
+            <div class="mono text-[10px] text-muted-foreground">custom</div>
+          </div>
+          <div class="mt-3 flex items-baseline gap-1">
+            <span class="text-4xl font-semibold">Let's talk</span>
+          </div>
+          <div class="mt-1.5 text-[12px] text-muted-foreground">Committed spend from $500/mo</div>
+        </div>
+        <ul class="p-6 space-y-2.5 text-[13px] flex-1">
+          <li class="flex gap-2"><span class="text-muted-foreground mono">·</span> 2.4 TB RAM · 2,400 vCPU total</li>
+          <li class="flex gap-2"><span class="text-muted-foreground mono">·</span> Up to 50 replicas · 5 TB volumes</li>
+          <li class="flex gap-2"><span class="text-muted-foreground mono">·</span> SSO/SAML · HIPAA BAA · 18mo audit</li>
+          <li class="flex gap-2"><span class="text-muted-foreground mono">·</span> 360h image retention · custom regions</li>
+          <li class="flex gap-2"><span class="text-muted-foreground mono">·</span> Dedicated account team · SLA</li>
+        </ul>
+        <div class="p-6 pt-0">
+          <a class="inline-flex w-full justify-center items-center h-10 rounded-md border border-input hover:bg-accent text-[13px] font-medium transition-colors" href="#">Talk to sales</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resource rate strip -->
+    <div class="mt-10 grid sm:grid-cols-2 md:grid-cols-4 gap-px bg-border/60 rounded-xl overflow-hidden border hairline">
+      <div class="bg-background p-4">
+        <div class="mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">vCPU</div>
+        <div class="text-xl font-semibold mt-1">$20 <span class="text-muted-foreground text-xs mono">/ vcpu / mo</span></div>
+      </div>
+      <div class="bg-background p-4">
+        <div class="mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">RAM</div>
+        <div class="text-xl font-semibold mt-1">$10 <span class="text-muted-foreground text-xs mono">/ GB / mo</span></div>
+      </div>
+      <div class="bg-background p-4">
+        <div class="mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Egress</div>
+        <div class="text-xl font-semibold mt-1">$0.05 <span class="text-muted-foreground text-xs mono">/ GB</span></div>
+      </div>
+      <div class="bg-background p-4">
+        <div class="mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Volumes</div>
+        <div class="text-xl font-semibold mt-1">$0.15 <span class="text-muted-foreground text-xs mono">/ GB / mo</span></div>
+      </div>
+    </div>
+    <p class="mt-4 text-center text-[12px] mono text-muted-foreground">billed per minute · private service-to-service traffic is $0 · hard spending limit configurable on every account</p>
+  </div>
+</section>
+
+<!-- ===== Final CTA ===== -->
+<section class="relative border-t hairline hero-grad overflow-hidden">
+  <div class="absolute inset-0 grid-overlay opacity-50 pointer-events-none"></div>
+  <div class="relative max-w-[1280px] mx-auto px-6 lg:px-8 py-28 text-center">
+    <div class="reef-line max-w-md mx-auto mb-10"></div>
+    <h2 class="text-5xl md:text-7xl font-semibold tracking-tight leading-[0.95] max-w-4xl mx-auto">
+      Push code.<br/>
+      <span style="color:hsl(var(--action))">Get a URL.</span><br/>
+      <span class="text-muted-foreground/70">Sleep at night.</span>
+    </h2>
+    <p class="mt-7 text-lg text-muted-foreground max-w-xl mx-auto">$5 trial credit. No card. Four minutes from sign-up to a public, TLS-terminated, autoscaled URL.</p>
+    <div class="mt-10 flex flex-wrap items-center justify-center gap-3">
+      <a class="inline-flex items-center gap-2 h-12 px-6 rounded-lg text-[14px] font-semibold transition-all btn-glow" style="background:hsl(var(--action));color:#002B1F" href="#">
+        Start deploying
+        <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+      <a class="inline-flex items-center h-12 px-6 rounded-lg text-[14px] font-medium border border-input hover:bg-accent transition-colors" href="#">Book a demo</a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Footer ===== -->
+<footer class="border-t hairline">
+  <div class="max-w-[1280px] mx-auto px-6 lg:px-8 py-14">
+    <div class="grid md:grid-cols-12 gap-10">
+      <div class="md:col-span-4">
+        <div class="flex items-center gap-2.5 mb-4">
+          <div class="relative w-7 h-7">
+            <div class="absolute inset-0 rounded-md bg-primary/15 border border-primary/30"></div>
+            <div class="absolute inset-[5px] rounded-[3px] bg-primary"></div>
+            <div class="absolute inset-[10px] rounded-[1px]" style="background:hsl(var(--action))"></div>
+          </div>
+          <div class="leading-none">
+            <div class="text-[14px] font-semibold tracking-tight">bitsreef</div>
+            <div class="text-[9px] mono text-muted-foreground uppercase tracking-[0.18em]">cygnara cloud</div>
+          </div>
+        </div>
+        <p class="text-[13px] text-muted-foreground leading-relaxed max-w-sm">The auto-pilot for the cloud. Deploy, manage, and scale containerized applications on your own infrastructure — without the complexity.</p>
+        <div class="mt-6 flex items-center gap-3 text-muted-foreground">
+          <a href="#" class="hover:text-foreground transition-colors" aria-label="GitHub"><svg viewBox="0 0 16 16" class="w-4 h-4" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 005.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a>
+          <a href="#" class="hover:text-foreground transition-colors" aria-label="X"><svg viewBox="0 0 24 24" class="w-4 h-4" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
+          <a href="#" class="hover:text-foreground transition-colors" aria-label="Discord"><svg viewBox="0 0 24 24" class="w-4 h-4" fill="currentColor"><path d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.331c-1.183 0-2.157-1.086-2.157-2.42 0-1.333.956-2.42 2.157-2.42 1.21 0 2.176 1.096 2.157 2.42 0 1.334-.956 2.42-2.157 2.42zm7.974 0c-1.183 0-2.157-1.086-2.157-2.42 0-1.333.955-2.42 2.157-2.42 1.21 0 2.176 1.096 2.157 2.42 0 1.334-.946 2.42-2.157 2.42z"/></svg></a>
+        </div>
+      </div>
+      <div class="md:col-span-2">
+        <div class="mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-3">Product</div>
+        <ul class="space-y-2 text-[13px]">
+          <li><a href="#" class="text-muted-foreground hover:text-foreground transition-colors">Features</a></li>
+          <li><a href="#" class="text-muted-foreground hover:text-foreground transition-colors">Pricing</a></li>
+          <li><a href="#" class="text-muted-foreground hover:text-foreground transition-colors">Templates</a></li>
+          <li><a href="#" class="text-muted-foreground hover:text-foreground transition-colors">Changelog</a></li>
+          <li><a href="#" class="text-muted-foreground hover:text-foreground transition-colors">Roadmap</a></li>
+        </ul>
+      </div>
+      <div class="md:col-span-2">
+        <div class="mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-3">Developers</div>
+        <ul class="space-y-2 text-[13px]">
+          <li><a href="#" class="text-muted-foreground hover:text-foreground transition-colors">Docs</a></li>
+          <li><a href="#" class="text-muted-foreground hover:text-foreground transition-colors">API reference</a></li>
+          <li><a href="#" class="text-muted-foreground hover:text-foreground transition-colors">CLI</a></li>
+          <li><a href="#" class="text-muted-foreground hover:text-foreground transition-colors">Status</a></li>
+        </ul>
+      </div>
+      <div class="md:col-span-2">
+        <div class="mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-3">Company</div>
+        <ul class="space-y-2 text-[13px]">
+          <li><a href="#" class="text-muted-foreground hover:text-foreground transition-colors">About Cygnara</a></li>
+          <li><a href="#" class="text-muted-foreground hover:text-foreground transition-colors">Customers</a></li>
+          <li><a href="#" class="text-muted-foreground hover:text-foreground transition-colors">Blog</a></li>
+          <li><a href="#" class="text-muted-foreground hover:text-foreground transition-colors">Careers</a></li>
+          <li><a href="#" class="text-muted-foreground hover:text-foreground transition-colors">Contact</a></li>
+        </ul>
+      </div>
+      <div class="md:col-span-2">
+        <div class="mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-3">Legal</div>
+        <ul class="space-y-2 text-[13px]">
+          <li><a href="#" class="text-muted-foreground hover:text-foreground transition-colors">Terms</a></li>
+          <li><a href="#" class="text-muted-foreground hover:text-foreground transition-colors">Privacy</a></li>
+          <li><a href="#" class="text-muted-foreground hover:text-foreground transition-colors">DPA</a></li>
+          <li><a href="#" class="text-muted-foreground hover:text-foreground transition-colors">Security</a></li>
+          <li><a href="#" class="text-muted-foreground hover:text-foreground transition-colors">SLA</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="reef-line mt-12 mb-6"></div>
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 text-[12px] mono text-muted-foreground">
+      <div>© 2026 Cygnara Technologies · <a href="Bitsreef Design System.html" class="hover:text-foreground transition-colors">design system</a></div>
+      <div class="flex items-center gap-4">
+        <span class="inline-flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full live-dot" style="background:hsl(var(--action))"></span> all systems normal</span>
+        <span>built on main@ebd9dfe</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
