@@ -128,9 +128,49 @@
   @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
   .shimmer { position: relative; overflow: hidden; }
   .shimmer::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, hsla(240,100%,97%,0.08), transparent); animation: shimmer 3s ease-in-out infinite; }
+  /* Coming-soon announcement strip */
+  @keyframes strip-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  .strip-track { display: flex; width: max-content; animation: strip-marquee 60s linear infinite; }
+  .strip-track > span { padding: 0 1.25rem; display: inline-flex; align-items: center; gap: .5rem; }
+  /* Newsletter form */
+  .nl-form { transition: border-color .18s ease, box-shadow .18s ease; }
+  .nl-form:focus-within { border-color: hsl(var(--action)); box-shadow: 0 0 0 3px hsla(158,100%,50%,0.18); }
+  .nl-input { background: transparent; outline: none; width: 100%; }
+  .nl-input::placeholder { color: hsl(var(--muted-foreground)); }
+  .nl-success { animation: nl-pop .35s cubic-bezier(.2,.9,.3,1.2); }
+  @keyframes nl-pop { 0% { transform: scale(.92); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+  /* Preview ribbon */
+  .preview-tag { background: repeating-linear-gradient(45deg, hsla(43,100%,50%,0.15) 0 6px, hsla(43,100%,50%,0.05) 6px 12px); border-color: hsla(43,100%,50%,0.4); color: hsl(var(--warning)); }
 </style>
 </head>
 <body class="min-h-screen">
+
+<!-- ===== Coming-soon announcement strip ===== -->
+<div class="relative overflow-hidden border-b hairline" style="background:linear-gradient(90deg, hsla(252,100%,64%,0.12), hsla(158,100%,50%,0.10), hsla(326,100%,62%,0.12))">
+  <div class="relative max-w-[1280px] mx-auto px-6 lg:px-8 h-9 flex items-center gap-4 mono text-[11px] uppercase tracking-[0.18em]">
+    <span class="inline-flex items-center gap-2 flex-none">
+      <span class="w-1.5 h-1.5 rounded-full live-dot" style="background:hsl(var(--action))"></span>
+      <span style="color:hsl(var(--action))">Coming soon</span>
+      <span class="text-muted-foreground hidden sm:inline">· Q3 2026</span>
+    </span>
+    <div class="flex-1 overflow-hidden hidden md:block" style="mask-image:linear-gradient(90deg, transparent, black 5%, black 95%, transparent); -webkit-mask-image:linear-gradient(90deg, transparent, black 5%, black 95%, transparent);">
+      <div class="strip-track text-muted-foreground/80">
+        <span>Bitsreef is in private development</span><span class="opacity-40">/</span>
+        <span>Join the waitlist for early access</span><span class="opacity-40">/</span>
+        <span>Founding-team pricing for the first 500</span><span class="opacity-40">/</span>
+        <span>Built on Docker · Traefik · Prometheus · Loki</span><span class="opacity-40">/</span>
+        <span>Bitsreef is in private development</span><span class="opacity-40">/</span>
+        <span>Join the waitlist for early access</span><span class="opacity-40">/</span>
+        <span>Founding-team pricing for the first 500</span><span class="opacity-40">/</span>
+        <span>Built on Docker · Traefik · Prometheus · Loki</span><span class="opacity-40">/</span>
+      </div>
+    </div>
+    <a href="#waitlist" class="flex-none inline-flex items-center gap-1.5 text-[10px] font-semibold tracking-[0.18em] hover:text-foreground transition-colors" style="color:hsl(var(--action))">
+      Get the launch email
+      <svg viewBox="0 0 24 24" class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </a>
+  </div>
+</div>
 
 <!-- ===== Top nav ===== -->
 <header class="sticky top-0 z-40 backdrop-blur-xl bg-background/70 border-b hairline">
@@ -151,9 +191,8 @@
       <a class="px-3 py-1.5 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors" href="#">Changelog</a>
     </nav>
     <div class="flex items-center gap-2">
-      <a class="hidden sm:inline-flex items-center h-8 px-3 rounded-md text-[12px] font-medium text-muted-foreground hover:text-foreground transition-colors" href="#">Sign in</a>
-      <a class="inline-flex items-center gap-2 h-8 px-3 rounded-md text-[12px] font-semibold transition-all btn-glow" style="background:hsl(var(--action));color:#002B1F" href="#">
-        Start deploying
+      <a class="inline-flex items-center gap-2 h-8 px-3 rounded-md text-[12px] font-semibold transition-all btn-glow" style="background:hsl(var(--action));color:#002B1F" href="#waitlist">
+        Join waitlist
         <svg viewBox="0 0 24 24" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
       </a>
     </div>
@@ -167,9 +206,9 @@
     <div class="flex items-center gap-2 mb-7">
       <span class="inline-flex items-center gap-2 h-7 px-3 rounded-full bg-primary/15 border border-primary/30 text-[11px] mono uppercase tracking-wider text-primary">
         <span class="w-1.5 h-1.5 rounded-full bg-primary live-dot"></span>
-        v2.4 · multi-region preview now live
+        coming soon · Q3 2026 · private preview
       </span>
-      <span class="hidden md:inline text-[11px] mono text-muted-foreground">→ <a class="hover:text-foreground transition-colors" href="#">read changelog</a></span>
+      <span class="hidden md:inline text-[11px] mono text-muted-foreground">→ <a class="hover:text-foreground transition-colors" href="#waitlist">join the waitlist</a></span>
     </div>
 
     <h1 class="text-[52px] md:text-[88px] leading-[0.92] tracking-tight font-semibold max-w-5xl">
@@ -179,19 +218,39 @@
     </h1>
 
     <p class="mt-7 max-w-2xl text-lg md:text-xl text-muted-foreground leading-relaxed">
-      Bitsreef is the cloud platform for shipping containerized apps — building from Git, routing with SSL, scaling on metrics, and rolling back on failure. One API. One canvas. Zero DevOps tax.
+      Bitsreef is the cloud platform for shipping containerized apps — building from Git, routing with SSL, scaling on metrics, and rolling back on failure. We’re in private development. <span class="text-foreground">Get on the waitlist</span> and we’ll let you in before everyone else.
     </p>
 
-    <div class="mt-10 flex flex-wrap items-center gap-3">
-      <a class="inline-flex items-center gap-2 h-12 px-5 rounded-lg text-[14px] font-semibold transition-all btn-glow" style="background:hsl(var(--action));color:#002B1F" href="#">
-        Deploy your first service
-        <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    <!-- ===== Waitlist signup (hero) ===== -->
+    <form id="waitlist" class="mt-10 max-w-xl" novalidate>
+      <div class="nl-form flex items-stretch gap-1.5 p-1.5 rounded-xl border hairline bg-card/60 backdrop-blur">
+        <label class="sr-only" for="nl-email-hero">Email address</label>
+        <div class="flex items-center gap-2 px-3 flex-1 min-w-0">
+          <svg viewBox="0 0 24 24" class="w-4 h-4 text-muted-foreground flex-none" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          <input id="nl-email-hero" type="email" required autocomplete="email" placeholder="you@company.com" class="nl-input h-11 text-[14px] mono" data-nl-input/>
+        </div>
+        <button type="submit" class="inline-flex items-center gap-2 h-11 px-4 rounded-lg text-[13px] font-semibold transition-all btn-glow whitespace-nowrap" style="background:hsl(var(--action));color:#002B1F">
+          Join the waitlist
+          <svg viewBox="0 0 24 24" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+      </div>
+      <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] mono text-muted-foreground" data-nl-meta>
+        <span class="inline-flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-primary"></span>no spam, ever</span>
+        <span class="inline-flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full" style="background:hsl(var(--action))"></span><span data-nl-count>2,847</span> already on the list</span>
+        <span class="inline-flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-pink"></span>$5 credit at launch</span>
+      </div>
+      <div class="mt-3 text-[12px]" data-nl-status></div>
+    </form>
+
+    <div class="mt-6 flex flex-wrap items-center gap-3">
+      <a class="inline-flex items-center gap-2 h-10 px-4 rounded-lg text-[13px] font-medium border border-input bg-background/40 hover:bg-accent transition-colors" href="#product">
+        <svg viewBox="0 0 24 24" class="w-4 h-4 opacity-70" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+        See a preview of the product
       </a>
-      <a class="inline-flex items-center gap-2 h-12 px-5 rounded-lg text-[14px] font-medium border border-input bg-background/40 hover:bg-accent transition-colors" href="#">
+      <a class="inline-flex items-center gap-2 h-10 px-4 rounded-lg text-[13px] font-medium text-muted-foreground hover:text-foreground transition-colors" href="#">
         <svg viewBox="0 0 24 24" class="w-4 h-4 opacity-70" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-        Read the docs
+        Read the docs (draft)
       </a>
-      <span class="hidden lg:inline text-[12px] mono text-muted-foreground ml-2">no credit card · $5 trial credit · live in 4 min</span>
     </div>
 
     <!-- code-to-URL strip -->
@@ -217,12 +276,12 @@
     <!-- Trust-strip / metrics -->
     <div class="mt-14 grid grid-cols-2 md:grid-cols-4 gap-px bg-border/60 rounded-xl overflow-hidden border hairline max-w-4xl">
       <div class="bg-background/80 p-5">
-        <div class="text-[10px] mono uppercase tracking-[0.18em] text-muted-foreground">code → URL</div>
-        <div class="text-3xl font-semibold mt-1.5">&lt; 4<span class="text-muted-foreground text-xl"> min</span></div>
+        <div class="text-[10px] mono uppercase tracking-[0.18em] text-muted-foreground">on the waitlist</div>
+        <div class="text-3xl font-semibold mt-1.5" data-nl-count>2,847<span class="text-muted-foreground text-xl"> &amp; growing</span></div>
       </div>
       <div class="bg-background/80 p-5">
-        <div class="text-[10px] mono uppercase tracking-[0.18em] text-muted-foreground">price/perf vs hyperscalers</div>
-        <div class="text-3xl font-semibold mt-1.5">17<span class="text-muted-foreground text-xl">×</span></div>
+        <div class="text-[10px] mono uppercase tracking-[0.18em] text-muted-foreground">target launch</div>
+        <div class="text-3xl font-semibold mt-1.5">Q3<span class="text-muted-foreground text-xl"> 2026</span></div>
       </div>
       <div class="bg-background/80 p-5">
         <div class="text-[10px] mono uppercase tracking-[0.18em] text-muted-foreground">tests passing</div>
@@ -307,6 +366,7 @@
           <span class="px-1.5 py-0.5 rounded bg-secondary text-secondary-foreground text-[10px]">production</span>
         </div>
         <div class="ml-auto flex items-center gap-2">
+          <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-semibold mono border preview-tag">preview · not live yet</span>
           <span class="inline-flex items-center gap-1.5 rounded-full bg-success/15 text-success px-2.5 py-0.5 text-[11px] font-semibold"><span class="w-1.5 h-1.5 rounded-full bg-success live-dot"></span>all healthy</span>
           <span class="mono text-[11px] text-muted-foreground hidden md:inline">canvas · v2.4</span>
         </div>
@@ -972,23 +1032,100 @@
   </div>
 </section>
 
-<!-- ===== Final CTA ===== -->
-<section class="relative border-t hairline hero-grad overflow-hidden">
+<!-- ===== Final CTA / Newsletter ===== -->
+<section id="waitlist-cta" class="relative border-t hairline hero-grad overflow-hidden">
   <div class="absolute inset-0 grid-overlay opacity-50 pointer-events-none"></div>
-  <div class="relative max-w-[1280px] mx-auto px-6 lg:px-8 py-28 text-center">
-    <div class="reef-line max-w-md mx-auto mb-10"></div>
-    <h2 class="text-5xl md:text-7xl font-semibold tracking-tight leading-[0.95] max-w-4xl mx-auto">
-      Push code.<br/>
-      <span style="color:hsl(var(--action))">Get a URL.</span><br/>
-      <span class="text-muted-foreground/70">Sleep at night.</span>
-    </h2>
-    <p class="mt-7 text-lg text-muted-foreground max-w-xl mx-auto">$5 trial credit. No card. Four minutes from sign-up to a public, TLS-terminated, autoscaled URL.</p>
-    <div class="mt-10 flex flex-wrap items-center justify-center gap-3">
-      <a class="inline-flex items-center gap-2 h-12 px-6 rounded-lg text-[14px] font-semibold transition-all btn-glow" style="background:hsl(var(--action));color:#002B1F" href="#">
-        Start deploying
-        <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-      </a>
-      <a class="inline-flex items-center h-12 px-6 rounded-lg text-[14px] font-medium border border-input hover:bg-accent transition-colors" href="#">Book a demo</a>
+  <div class="relative max-w-[1280px] mx-auto px-6 lg:px-8 py-28">
+    <div class="grid lg:grid-cols-[1.1fr_1fr] gap-14 items-center">
+      <div>
+        <div class="text-[11px] mono uppercase tracking-[0.18em] text-muted-foreground mb-3 inline-flex items-center gap-2">
+          <span class="w-1.5 h-1.5 rounded-full live-dot" style="background:hsl(var(--action))"></span>
+          06 · launching Q3 2026
+        </div>
+        <h2 class="text-5xl md:text-7xl font-semibold tracking-tight leading-[0.95] max-w-2xl">
+          We’re not<br/>
+          <span style="color:hsl(var(--action))">live yet.</span><br/>
+          <span class="text-muted-foreground/70">Be first when we are.</span>
+        </h2>
+        <p class="mt-7 text-lg text-muted-foreground max-w-lg leading-relaxed">
+          Bitsreef is in private development. Join the waitlist and we’ll send you one email — the day we open the doors — with a code for $5 trial credit and founding-team pricing locked in for a year.
+        </p>
+        <div class="mt-8 grid grid-cols-3 gap-3 max-w-lg">
+          <div class="rounded-lg border hairline bg-card/60 backdrop-blur p-3">
+            <div class="mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">launch email</div>
+            <div class="text-[12px] mt-1">one message, day-of</div>
+          </div>
+          <div class="rounded-lg border hairline bg-card/60 backdrop-blur p-3">
+            <div class="mono text-[10px] uppercase tracking-[0.18em]" style="color:hsl(var(--action))">early access</div>
+            <div class="text-[12px] mt-1">two weeks ahead</div>
+          </div>
+          <div class="rounded-lg border hairline bg-card/60 backdrop-blur p-3">
+            <div class="mono text-[10px] uppercase tracking-[0.18em] text-pink">founder pricing</div>
+            <div class="text-[12px] mt-1">for the first 500</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Newsletter card -->
+      <div class="relative">
+        <div class="rounded-2xl border bg-card/70 backdrop-blur overflow-hidden" style="border-color:hsla(158,100%,50%,0.35); box-shadow: 0 0 0 1px hsla(158,100%,50%,0.15), 0 30px 80px -30px hsla(158,100%,50%,0.35)">
+          <div class="px-5 h-11 border-b hairline flex items-center gap-3">
+            <div class="flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-destructive/70"></span>
+              <span class="w-2 h-2 rounded-full bg-warning/70"></span>
+              <span class="w-2 h-2 rounded-full bg-success/70"></span>
+            </div>
+            <span class="mono text-[11px] text-muted-foreground">waitlist · bitsreef.app</span>
+            <span class="ml-auto inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-semibold mono border preview-tag">private beta</span>
+          </div>
+          <form id="waitlist-cta-form" class="p-6" novalidate>
+            <label for="nl-email-cta" class="mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">your email</label>
+            <div class="nl-form mt-2 flex items-stretch gap-1.5 p-1.5 rounded-xl border hairline bg-background/60">
+              <div class="flex items-center gap-2 px-3 flex-1 min-w-0">
+                <svg viewBox="0 0 24 24" class="w-4 h-4 text-muted-foreground flex-none" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                <input id="nl-email-cta" type="email" required autocomplete="email" placeholder="founder@startup.dev" class="nl-input h-11 text-[14px] mono" data-nl-input/>
+              </div>
+              <button type="submit" class="inline-flex items-center gap-2 h-11 px-4 rounded-lg text-[13px] font-semibold transition-all btn-glow whitespace-nowrap" style="background:hsl(var(--action));color:#002B1F">
+                Join waitlist
+                <svg viewBox="0 0 24 24" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              </button>
+            </div>
+            <fieldset class="mt-5">
+              <legend class="mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">what brings you here?</legend>
+              <div class="mt-2 flex flex-wrap gap-2" data-nl-roles>
+                <label class="inline-flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" name="role" value="indie" class="sr-only peer"/>
+                  <span class="px-3 py-1.5 rounded-full border hairline text-[12px] hover:border-foreground/40 transition-colors peer-checked:border-[hsl(var(--action))] peer-checked:bg-[hsla(158,100%,50%,0.1)] peer-checked:text-foreground">Indie dev</span>
+                </label>
+                <label class="inline-flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" name="role" value="startup" class="sr-only peer"/>
+                  <span class="px-3 py-1.5 rounded-full border hairline text-[12px] hover:border-foreground/40 transition-colors peer-checked:border-[hsl(var(--action))] peer-checked:bg-[hsla(158,100%,50%,0.1)] peer-checked:text-foreground">Startup founder</span>
+                </label>
+                <label class="inline-flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" name="role" value="team" class="sr-only peer"/>
+                  <span class="px-3 py-1.5 rounded-full border hairline text-[12px] hover:border-foreground/40 transition-colors peer-checked:border-[hsl(var(--action))] peer-checked:bg-[hsla(158,100%,50%,0.1)] peer-checked:text-foreground">Engineering team</span>
+                </label>
+                <label class="inline-flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" name="role" value="agency" class="sr-only peer"/>
+                  <span class="px-3 py-1.5 rounded-full border hairline text-[12px] hover:border-foreground/40 transition-colors peer-checked:border-[hsl(var(--action))] peer-checked:bg-[hsla(158,100%,50%,0.1)] peer-checked:text-foreground">Agency / consultant</span>
+                </label>
+                <label class="inline-flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" name="role" value="curious" class="sr-only peer"/>
+                  <span class="px-3 py-1.5 rounded-full border hairline text-[12px] hover:border-foreground/40 transition-colors peer-checked:border-[hsl(var(--action))] peer-checked:bg-[hsla(158,100%,50%,0.1)] peer-checked:text-foreground">Just curious</span>
+                </label>
+              </div>
+            </fieldset>
+            <div class="mt-4 text-[12px]" data-nl-status></div>
+            <div class="mt-5 pt-5 border-t hairline flex items-center justify-between text-[11px] mono text-muted-foreground">
+              <span class="inline-flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full" style="background:hsl(var(--action))"></span> <span data-nl-count>2,847</span> on the list</span>
+              <span>we won’t share your email · one click to leave</span>
+            </div>
+          </form>
+        </div>
+        <!-- decorative connector dots -->
+        <div class="absolute -top-3 -left-3 w-2 h-2 rounded-full" style="background:hsl(var(--primary))"></div>
+        <div class="absolute -bottom-3 -right-3 w-2 h-2 rounded-full" style="background:hsl(var(--action))"></div>
+      </div>
     </div>
   </div>
 </section>
@@ -1057,12 +1194,156 @@
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 text-[12px] mono text-muted-foreground">
       <div>© 2026 Cygnara Technologies · <a href="Bitsreef Design System.html" class="hover:text-foreground transition-colors">design system</a></div>
       <div class="flex items-center gap-4">
-        <span class="inline-flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full live-dot" style="background:hsl(var(--action))"></span> all systems normal</span>
-        <span>built on main@ebd9dfe</span>
+        <span class="inline-flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full live-dot" style="background:hsl(var(--action))"></span> pre-launch · Q3 2026</span>
+        <span>main@ebd9dfe</span>
       </div>
     </div>
   </div>
 </footer>
+
+<!-- ===== Waitlist / newsletter logic ===== -->
+<script>
+(function () {
+  var STORAGE_KEY = 'bitsreef:waitlist';
+  var COUNT_BASE  = 2847;
+
+  function load() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"emails":[]}'); }
+    catch (e) { return { emails: [] }; }
+  }
+  function save(state) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+  }
+  function fmt(n) {
+    return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+  function isValidEmail(s) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s.trim());
+  }
+  function syncCount() {
+    var state = load();
+    var n = COUNT_BASE + state.emails.length;
+    document.querySelectorAll('[data-nl-count]').forEach(function (el) {
+      // preserve any trailing text like " & growing"
+      var trailing = el.innerHTML.match(/<span[\s\S]*<\/span>\s*$/);
+      el.innerHTML = fmt(n) + (trailing ? trailing[0] : (el.dataset.nlSuffix || ''));
+    });
+  }
+  function markJoined() {
+    var state = load();
+    if (!state.emails.length) return;
+    document.querySelectorAll('form[data-nl-form-bound]').forEach(function (form) {
+      if (form.dataset.nlJoined === '1') return;
+      // If user already submitted before, show a calm confirmation under the form
+      var status = form.querySelector('[data-nl-status]');
+      if (status && !status.textContent) {
+        var last = state.emails[state.emails.length - 1];
+        status.innerHTML = '<span class="mono nl-success inline-flex items-center gap-2" style="color:hsl(var(--action))">'
+          + '<svg viewBox="0 0 24 24" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+          + 'you\u2019re on the list as <span class="text-foreground">' + escapeHtml(last.email) + '</span> \u00b7 we\u2019ll be in touch'
+          + '</span>';
+      }
+    });
+  }
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, function (c) {
+      return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
+    });
+  }
+
+  function bindForm(form) {
+    if (!form || form.dataset.nlFormBound === '1') return;
+    form.dataset.nlFormBound = '1';
+
+    var input   = form.querySelector('[data-nl-input]');
+    var status  = form.querySelector('[data-nl-status]');
+    var btn     = form.querySelector('button[type="submit"]');
+    var roles   = form.querySelector('[data-nl-roles]');
+
+    form.addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      if (!input) return;
+      var email = (input.value || '').trim();
+
+      if (!isValidEmail(email)) {
+        status.innerHTML = '<span class="mono inline-flex items-center gap-2 text-destructive">'
+          + '<svg viewBox="0 0 24 24" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+          + 'that doesn\u2019t look like a valid email \u2014 try again'
+          + '</span>';
+        input.focus();
+        return;
+      }
+
+      var state = load();
+      var dup = state.emails.some(function (e) { return e.email.toLowerCase() === email.toLowerCase(); });
+      if (dup) {
+        status.innerHTML = '<span class="mono inline-flex items-center gap-2 text-info">'
+          + '<svg viewBox="0 0 24 24" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
+          + 'you\u2019re already on the list \u2014 see you at launch'
+          + '</span>';
+        return;
+      }
+
+      var selectedRoles = [];
+      if (roles) {
+        roles.querySelectorAll('input[type="checkbox"]:checked').forEach(function (cb) {
+          selectedRoles.push(cb.value);
+        });
+      }
+
+      state.emails.push({
+        email: email,
+        roles: selectedRoles,
+        at:    new Date().toISOString(),
+        ref:   location.hash || form.id || 'hero'
+      });
+      save(state);
+      syncCount();
+
+      // Success state \u2014 collapse the form, show celebration card
+      var wrap = form.querySelector('.nl-form');
+      if (wrap) {
+        wrap.innerHTML =
+          '<div class="nl-success flex items-center gap-3 px-4 py-3 w-full">'
+          + '  <div class="w-8 h-8 rounded-full grid place-items-center flex-none" style="background:hsla(158,100%,50%,0.18)">'
+          + '    <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="hsl(var(--action))" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+          + '  </div>'
+          + '  <div class="flex-1 min-w-0">'
+          + '    <div class="text-[13px] font-semibold">You\u2019re on the list.</div>'
+          + '    <div class="mono text-[11px] text-muted-foreground truncate">' + escapeHtml(email) + ' \u00b7 we\u2019ll email you the day Bitsreef goes live</div>'
+          + '  </div>'
+          + '  <span class="mono text-[10px] uppercase tracking-[0.18em] px-2 py-0.5 rounded-full hidden sm:inline" style="background:hsla(158,100%,50%,0.12); color:hsl(var(--action))">#' + fmt(COUNT_BASE + state.emails.length) + '</span>'
+          + '</div>';
+      }
+      if (status) status.innerHTML = '';
+      if (roles)  roles.parentElement.style.display = 'none';
+
+      form.dataset.nlJoined = '1';
+    });
+
+    // Clear error styling as the user types
+    if (input) {
+      input.addEventListener('input', function () {
+        if (status && status.firstChild && status.textContent.indexOf('valid email') !== -1) {
+          status.innerHTML = '';
+        }
+      });
+    }
+  }
+
+  function init() {
+    document.querySelectorAll('form[id="waitlist"], form#waitlist-cta-form').forEach(bindForm);
+    syncCount();
+    markJoined();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
 
 </body>
 </html>
